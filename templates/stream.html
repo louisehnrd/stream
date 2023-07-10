@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TEST FLASK-SOCKIO</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+        <style>
+            #messages li {
+                display: block;
+            }
+        </style>
+    </head>
+
+    <body>
+        <form id="form">
+            <!--<input type="text" id="input" placeholder="Enter your message">
+            <button type="submit" id="submit">Send message</button>-->
+            <input type="number" id="input" placeholder="Enter the period" step="1">
+            <button type="submit" id="submit"> Display Pic </button>
+            
+        </form>
+        <video id="video" autoplay></video>
+        <ul id="messages">
+        </ul>
+        <ul id="pic"></ul>
+        <script src="{{ url_for('static', filename='script.js') }}"></script>
+    </body>
+
+</html>
