@@ -37,15 +37,19 @@ imageInput.addEventListener('change',(e)=>{
 */
 
 socket.on('streaming_started',function(data){
-    console.log('Streaming started');
-    /*
-    let output = data.output;
+    console.log(data.video_data);
+    //let videoData = new Uint8Array(data.video_data);
+    let videoBlob = new Blob([data.video_data],{type:'video/mp4'});
+    let videoUrl = URL.createObjectURL(videoBlob);
+    //let output = data.output;
     // Manipuler la vidéo ou les images du streaming côté client
     // Par exemple, afficher la vidéo dans un élément <video> HTML
     let videoElement = document.getElementById('video');
-    videoElement.srcObject = output;
+    //videoElement.src = URL.createObjectURL(output);
+    videoElement.src=videoUrl;
     videoElement.play();
-    */
+    console.log("chuis la");
+    socket.emit('stream',5);
 })
 
 socket.on('message',(message)=>{
