@@ -4,13 +4,17 @@ from time import sleep
 import io
 import os
 from picamera2 import Picamera2
-from picamera2.outputs import CircularOutput
+from picamera2.outputs import CircularOutput, FfmpegOutput
 from picamera2.encoders import H264Encoder
+import ffmpeg
+import subprocess
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app,threading=True)
+camera = None
+output = None
 
 @app.route('/')
 def index():
@@ -18,13 +22,46 @@ def index():
 
 @socketio.on('stream')
 def start_stream(period):
-    camera = Picamera2()
-    stream = io.BytesIO()
-    encoder = H264Encoder()
-    output = CircularOutput(buffersize = 150) # Flux circulaire pour une diffusion en continu
-    output.fileoutput = "file.h264"
-    camera.start_recording(encoder,output)
-    emit('streaming_started',{'output': output.fileoutput},broadcast=True)
+    global camera, output
+    
+    if camera and output:
+        output.fileoutput = "file.h264"
+        output.start()
+        sleep(5)
+        output.stop()
+        output_file_h264 = str(output.fileoutput)[str(output.fileoutput).find("name='") + 6 : str(output.fileoutput).rfind("'>")]
+        output_file_mp4 = 'file.mp4'
+        #ffmpeg.input(output_file_h264).output(output_file_mp4, vcodec='copy').run()
+        command = f'ffmpeg -i {output_file_h264} -c:v copy -y {output_file_mp4}'
+        subprocess.run(command, shell=True)
+        with open(output_file_mp4, 'rb') as file:
+            video_data = file.read()
+        emit('streaming_started', {'video_data': video_data}, broadcast=True)
+    else :
+        camera = Picamera2()
+        stream = io.BytesIO()
+        encoder = H264Encoder()
+        output = CircularOutput() # Flux circulaire pour une diffusion en continu
+        camera.start_recording(encoder,output)
+        #output.fileoutput=FfmpegOutput("file.mp4", audio=True)
+        output.fileoutput = "file.h264"
+        output.start()
+        sleep(5)
+        output.stop()
+        """
+        output=str(output.fileoutput)[str(output.fileoutput).find("name='") + 6 : str(output.fileoutput).rfind("'>")]
+        with open(output, 'rb') as file:
+            video_data = file.read()
+        """
+        output_file_h264 = str(output.fileoutput)[str(output.fileoutput).find("name='") + 6 : str(output.fileoutput).rfind("'>")]
+        output_file_mp4 = 'file.mp4'
+        #ffmpeg.input(output_file_h264).output(output_file_mp4, vcodec='copy').run()
+        command = f'ffmpeg -i {output_file_h264} -c:v copy -y {output_file_mp4}'
+        subprocess.run(command, shell=True)
+        with open(output_file_mp4, 'rb') as file:
+            video_data = file.read()
+        emit('streaming_started', {'video_data': video_data}, broadcast=True)
+
 
 @socketio.on('message')
 def handle_message(message):
